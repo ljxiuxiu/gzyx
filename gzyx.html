@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>棍子英雄</title>
+    <style>
+        /*显示区域*/
+        #box{
+            width: 300px;
+            height: 500px;
+            border:1px solid #000;
+            margin:70px auto;
+            overflow: hidden;
+            position: relative;
+        }
+        /*游戏区域*/
+        #content{
+            width: 600px;
+            height: 500px;
+            background: url("img/aa.jpg") ;
+            background-size: 800px 500px;
+            border:none;
+            position: relative;
+            left:0;
+        }
+        /*三个柱子*/
+        #leftdiv, #middiv,#rightdiv{
+            width: 80px;
+            height: 200px;
+            background: url("img/body_bg.jpg");
+            position: absolute;
+            bottom:0;
+            left:0;
+        }
+        #middiv{
+            left: 200px;
+        }
+        #rightdiv{
+            left:400px;
+        }
+        #hero{
+            width: 40px;
+            height: 40px;
+            background: url("img/timg.gif");
+            background-size: 100% 100%;
+            position: absolute;
+            left: 0;
+            bottom: 200px;
+        }
+
+        #stick{
+            width: 0px;
+            height: 6px;
+            background: #333;
+            position: absolute;
+            bottom:200px;
+            left: 40px;
+
+            /*一开始先旋转90°   旋转的话，默认的旋转点是中心点*/
+            transform: rotate(-90deg);
+            /*中心点*/
+            transform-origin: 0 6px;
+        }
+        #score{
+            width: 110px;
+            height: 30px;
+            line-height:30px;
+            text-align: center;
+            position: fixed;
+            top:90px;
+            left:540px;
+            background: red;
+            color: #fff;
+        }
+        #gameover{
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            position: absolute;
+            top:0;
+            left:0;
+            text-align: center;
+            display: none;
+        }
+        #gameover .p{
+            font-size: 28px;
+            font-weight: bold;
+            color: #fff;
+            margin:150px 0 0 0;
+        }
+        .score{
+            width: 150px;
+            height: 70px;
+            background: #fff;
+            margin:10px auto;
+            border-radius: 10px;
+        }
+         .score p{
+            color: #000;
+            font-size: 16px;
+            font-weight: 600;
+            padding-top:10px;
+             margin:0;
+        }
+        .score span{
+            font-size:20px;
+        }
+        #gameover a,#start{
+            width: 60px;
+            height: 30px;
+            line-height:30px;
+            text-align: center;
+            display: inline-block;
+            background: #E44355;
+            font-size: 12px;
+            text-decoration: none;
+            color: #fff;
+            border-radius:8px;
+         }
+        #start{
+            position: absolute;
+            left:49%;
+            bottom:20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="box">
+    <div id="content">
+        <div id="leftdiv"></div>
+        <div id="middiv"></div>
+        <div id="rightdiv"></div>
+        <div id="hero"></div>
+        <div id="stick"></div>
+        <div id="score">得分： <span >0</span> 分</div>
+    </div>
+    <div id="gameover">
+        <p class="p">游戏结束</p>
+        <div class="score">
+            <p>得分</p>
+            <span id="df">0</span>
+        </div>
+        <!--<a href="javascript:void(0)" id="again">关闭</a>-->
+        <a href="http://www.baidu.com" id="share">分享</a>
+    </div>
+</div>
+<!--<div id="start">开始游戏</div>-->
+<script>
+    function $(id){
+        return document.getElementById(id);
+    }
+    var num=0;      //棍子的长度
+    var timer;
+    var flag=false;      //判断游戏是否继续
+    var step=0;
+    var index=0;
+    var span=document.querySelector("#score span");
+
+    //游戏一开始的时候，中间的方块，大小，距离都应该随机
+    $("middiv").style.width=creatNum(40,80)+"px";
+    $("middiv").style.left=creatNum(80,220)+"px";
+
+   /* $("start").onclick= function () {
+        $("gameover").style.display="none";
+
+    }*/
+
+    //鼠标按下，棍子变长
+    $("box").onmousedown=function(ev){
+        timer=setInterval(function () {
+            num+=2;
+            $("stick").style.width=num+"px";
+        },20);
+        //禁止事件冒泡
+        ev.stopPropagation();
+    }
+
+    //鼠标松开，棍子倒下来
+    $("box").onmouseup= function (ev) {
+        clearInterval(timer);
+        //添加过渡
+        $("stick").style.transition="0.5s";
+        $("stick").style.transform="rotate(0deg)";
+        if( num>=$("middiv").offsetLeft-$("hero").offsetWidth  && num<=$("middiv").offsetLeft+$("middiv").offsetWidth-$("hero").offsetWidth ){
+            flag=true;
+            middleLeft=$("middiv").offsetLeft;
+
+            //开始随机创建右方块
+            next=creatNext();
+            $("rightdiv").style.width=next[1]+"px";
+            $("rightdiv").style.left=next[0]+"px";
+        }else{
+            flag=false;
+        }
+        //禁止事件冒泡
+        ev.stopPropagation();
+    }
+
+    function creatNum(start,end){
+        return parseInt(Math.random()*(end-start)+start);
+    }
+    function creatNext(){
+        var iWidth=creatNum(40,80);
+        var iLeft=creatNum(300,220+middleLeft);
+        return [iLeft,iWidth];
+    }
+    //红色的小方块什么时候移动
+    $("stick").addEventListener("transitionend", function (ev) {
+        //在什么情况下可以移动
+        if(flag){
+            //小方块移动
+            $("hero").style.transition="1s";
+            $("hero").style.left=$("middiv").offsetLeft+"px";
+            if( num>=$("middiv").offsetLeft+($("middiv").offsetWidth)/2-$("hero").offsetWidth-3 && num<=$("middiv").offsetLeft+($("middiv").offsetWidth)/2-$("hero").offsetWidth+3){
+                span.innerHTML=40+ parseInt(span.innerHTML);
+            }else{
+                span.innerHTML=20+ parseInt(span.innerHTML);
+            }
+        }else{
+            $("gameover").style.display="block";
+            $("df").innerHTML=span.innerHTML;
+        }
+        //禁止事件冒泡
+        ev.stopPropagation();
+    },false);
+
+    //当红色的小方块移动完毕，游戏区域往左移动
+    $("hero").addEventListener("transitionend", function (ev) {
+        $("content").style.transition="1s";
+        $("content").style.left= -$("middiv").offsetLeft+"px";
+//        var l=-$("middiv").offsetLeft+40+"px";
+        $("content").style.backgroundPosition=-num+"px 0";
+
+        step=1;
+        //禁止事件冒泡
+        ev.stopPropagation();
+    },false);
+
+    $("content").addEventListener("transitionend", function (ev) {
+        //注意：事件冒泡
+        if(step==1){
+            //一切还原
+            $("content").style.transition="none";
+            $("content").style.left=0;
+            $("hero").style.transition="none";
+            $("hero").style.left=0;
+            $("stick").style.transition="none";
+            $("stick").style.transform="rotate(-90deg)";
+            $("stick").style.width=0;
+
+
+
+            //左 -> 中    中  ->  右
+            $("leftdiv").style.width=$("middiv").style.width;
+            $("middiv").style.width=next[1]+"px";
+            $("middiv").style.left=next[0]-middleLeft+"px";
+
+            num=0;
+            step=0
+        }
+        //禁止事件冒泡
+        ev.stopPropagation();
+
+    },false);
+
+</script>
+</body>
+
+</html>
